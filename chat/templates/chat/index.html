@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <textarea class="form-control" id="chat-log" disabled rows="20">
+    {% for message in messages %}
+        {% if message.user_id == room.user_id %}
+            {{ message.send_time|date:"Y-m-d H:i:s" }} {% if request.user.id == message.user_id %} 我{% else %}{{ message.user.username }}{% endif %}(房主) : {{ message.content }}
+        {% else %}
+            {{ message.send_time|date:"Y-m-d H:i:s" }} {% if request.user.id == message.user_id %} 我{% else %}{{ message.user.username }}{% endif %} : {{ message.content }}
+        {% endif %}
+
+    {% endfor %}
+
+  </textarea><br/>
+  <input class="form-control" id="chat-message-input" type="text"/><br/>
+  <input class="btn btn-success btn-block" id="chat-message-submit" type="button" value="Send"/>
+{#    <div>#}
+{#    在线用户#}
+{#    <ul>#}
+{#        {% for foo in users %}#}
+{#            <li id="menu_demo_table">#}
+{#                {{ foo.user.username }}#}
+{#            </li>#}
+{#        {% endfor %}#}
+{##}
+{#    </ul>#}
+{#    </div>#}
+{% endblock %}
+
+{% block js %}
+<script>
+  $('#page_header').text('{{ room.name }}');
+  $('#page_header_descript').text('chat room');
+
+  var chatSocket = new WebSocket(
+      {% if chat_type != 'chat' %}
+          'ws://' + window.location.host + '/ws/room/{{label}}/'
+      {% else %}
+          'ws://' + window.location.host + '/ws/chat/{{label}}/'
+      {% endif %}
+  );
+
+  chatSocket.onmessage = function(e) {
+    var data = JSON.parse(e.data);
+    var message = data['message'];
+    console.log(message)
+      {% if chat_type != 'chat' %}
+        if (message['notify']) {
+            message = message['message']['content']
+        } else {
+            message = message['message']['time'] + ' ' + message['message']['user_ip'] + ' : ' + message['message']['content']
+        }
+      {% endif %}
+
+    document.querySelector('#chat-log').value += (message + '\n');
+  };
+
+  chatSocket.onclose = function(e) {
+      {#todo 客户端重新连接尝试#}
+    console.error('Chat socket closed unexpectedly');
+  };
+
+  document.querySelector('#chat-message-input').focus();
+  document.querySelector('#chat-message-input').onkeyup = function(e) {
+    if (e.keyCode === 13) {  // enter, return
+        document.querySelector('#chat-message-submit').click();
+    }
+  };
+
+  document.querySelector('#chat-message-submit').onclick = function(e) {
+    var messageInputDom = document.querySelector('#chat-message-input');
+    var message = messageInputDom.value;
+    chatSocket.send(JSON.stringify({
+        'message': message
+    }));
+
+    messageInputDom.value = '';
+  };
+</script>
+{% endblock %}

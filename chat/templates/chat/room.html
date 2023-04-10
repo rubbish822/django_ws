@@ -1,0 +1,20 @@
+{% extends 'login.html' %}
+{% block title %}
+Create Room
+{% endblock %}
+{% block content %}
+      <body class="text-center">
+    <form class="form-signin" action="{% url 'create-room' %}" method="post">
+        {% csrf_token %}
+      <img class="mb-4" src="https://getbootstrap.com/assets/brand/bootstrap-solid.svg" alt="" width="72" height="72">
+      <h1 class="h3 mb-3 font-weight-normal">Create Room</h1>
+      <label for="name" class="sr-only">Room Name</label>
+      <input id="inputEmail" name="name" class="form-control" placeholder="随便输入房间名即可创建" required autofocus>
+        <label for="name" class="sr-only">介绍</label>
+      <input id="inputEmail" name="content" class="form-control" placeholder="房间介绍" required autofocus>
+        <p>{{ error_msg }}</p>
+      <button class="btn btn-lg btn-primary btn-block" type="submit">Create Room</button>
+      <p class="mt-5 mb-3 text-muted">&copy; 2019-2020</p>
+    </form>
+  </body>
+{% endblock %}
